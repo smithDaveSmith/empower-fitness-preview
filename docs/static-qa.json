@@ -1,0 +1,15 @@
+{
+  "pages": 13,
+  "local_references_checked": 429,
+  "images_in_markup": 31,
+  "errors": [],
+  "contrast": {
+    "ink on paper": 14.22,
+    "ink on cyan": 9.83,
+    "white on pink": 5.06,
+    "pink on paper": 4.55,
+    "pink on cyan": 3.14,
+    "muted on paper": 6.18
+  },
+  "total_asset_bytes": 1993437
+}

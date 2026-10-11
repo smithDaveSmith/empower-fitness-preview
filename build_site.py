@@ -1,0 +1,168 @@
+"""Build static, relative-path pages. Run: python3 build_site.py"""
+from pathlib import Path
+from html import escape
+import os, json
+
+ROOT = Path(__file__).resolve().parent
+BOOK = 'https://calendly.com/empowerfitnesshub/30min'
+BASE_PATH = os.environ.get('PREVIEW_BASE_PATH', '/empower-fitness-preview/')
+
+def button(text='Arrange a free consultation', href='@booking', cyan=False):
+    return f'<a class="button{ " button-cyan" if cyan else ""}" href="{href}">{text}<span class="arrow" aria-hidden="true">↗</span></a>'
+
+def textlink(text, href):
+    if href == BOOK: href = '@booking'
+    return f'<a class="text-link" href="{href}">{text}<span class="arrow" aria-hidden="true">↗</span></a>'
+
+def img(name, alt, base='./', eager=False, cls=''):
+    # Actual dimensions are fixed in the markup to reserve space.
+    dims={'team-studio':(1500,1000),'emma':(1479,1600),'dean':(1201,1600),'mama-baba':(1500,1000),'boxercise':(1500,1000),'coaching':(1500,1000),'training':(1500,1000),'strength':(1500,1000),'timetable':(1500,1500)}
+    w,h=dims[name]
+    attrs='fetchpriority="high" loading="eager"' if eager else 'loading="lazy"'
+    return f'<img class="{cls}" src="{base}assets/images/{name}.webp" alt="{escape(alt)}" width="{w}" height="{h}" {attrs} decoding="async">'
+
+def brand(base):
+    return f'<a class="brand" href="{base}" aria-label="Empower Fitness Hub home"><span class="brand-mark" aria-hidden="true">'+''.join('<i></i>' for _ in range(8))+'</span><span class="brand-name">EMPOWER<small>FITNESS HUB · LUCAN</small></span></a>'
+
+def header(base='./',current=''):
+    links=[('classes','Training'),('our-team','Our people'),('class-timetable','Timetable'),('contact','Find us')]
+    nav=''.join(f'<a href="{base}{slug}/"'+(' aria-current="page"' if slug==current else '')+f'>{text}</a>' for slug,text in links)
+    cta=button('Talk to Emma','#calendar-start') if current=='book' else button()
+    return f'''<a class="skip" href="#main">Skip to content</a>
+<div class="concept-strip">Independent redesign concept · Not the official website · <a href="{base}preview-notice/">About this preview</a></div>
+<header class="header"><div class="header-inner wrap">{brand(base)}<nav class="nav" id="main-nav" aria-label="Main navigation">{nav}</nav>{cta}<button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" hidden>Menu +</button></div></header>
+<noscript><div class="no-js-note">All training information and booking links work without JavaScript. The interactive diagram is shown in its complete state.</div></noscript>'''
+
+def footer(base='./'):
+    return f'''<footer class="footer"><div class="footer-top">{brand(base)}<div class="footer-contact"><a href="mailto:emma@empowerfitnesshub.ie">emma@empowerfitnesshub.ie</a><a href="tel:+353858592838">085 859 2838</a><span class="eyebrow">Lucan village · Free parking</span></div><nav class="footer-links" aria-label="Footer navigation"><a href="{base}personal-training/">Personal training</a><a href="{base}classes/">Classes</a><a href="{base}class-timetable/">Timetable</a><a href="{base}book/">Arrange a consultation</a><a href="{base}our-team/">Our people</a><a href="{base}contact/">Contact & directions</a><a href="{base}faq/">FAQs</a><a href="{base}before-after/">Member stories</a><a href="https://instagram.com/empowerfitnesshub">Instagram ↗</a><a href="https://www.facebook.com/profile.php?id=100078757430092">Facebook ↗</a><a href="https://www.youtube.com/@empowerfitnesshub">YouTube ↗</a></nav></div><div class="footer-bottom"><p>Business information: Buddy Fitness Ltd trading as Empower Fitness Hub · Company no. 659589.</p><a href="{base}preview-notice/">Unofficial concept · Preview information</a></div></footer><a class="mobile-book" href="{base}book/">Free consultation <span aria-hidden="true">↗</span></a>'''
+
+def page(content,title,desc,base='./',current='',bodyclass=''):
+    return f'''<!doctype html><html lang="en-IE"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="description" content="{escape(desc)}"><meta name="theme-color" content="#f3f3ed"><title>{escape(title)} | Empower Fitness Hub — Unofficial Concept</title><link rel="icon" href="{base}assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="{base}assets/fonts/barlow-condensed.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="{base}assets/styles.css"><script defer src="{base}assets/vendor/gsap.min.js"></script><script defer src="{base}assets/vendor/ScrollTrigger.min.js"></script><script defer src="{base}assets/app.js"></script></head><body class="{bodyclass}">{header(base,current)}<main id="main" tabindex="-1">{content}</main>{footer(base)}</body></html>'''.replace('@booking',base+'book/')
+
+def hero(base='./'):
+    return f'''<section class="hero wrap" aria-labelledby="hero-title"><div class="hero-top"><p class="eyebrow">Personal training. Small groups.<br>Right here in Lucan village.</p><p class="eyebrow">Come as you are.<br>Start where you are.</p></div><h1 id="hero-title"><span class="hero-line">Make room</span><span class="hero-second"><span class="for">for</span><span class="hero-photo" aria-hidden="true">{img('coaching','',base,True)}</span><span class="you">you.</span></span></h1><div class="hero-bottom"><p>A small-group studio with a coach in your corner. Build strength, find your confidence and make time for yourself.</p><div class="hero-actions">{button()}{textlink('Find your training',base+'#training')}</div></div><div class="hero-footer"><p class="eyebrow">Maximum 8 per class</p><div class="micro-dots" aria-hidden="true">{''.join('<i></i>' for _ in range(8))}</div><p class="eyebrow">45-minute sessions</p><a class="eyebrow" href="#room">Get to know us ↓</a></div></section>'''
+
+def room(base='./', prototype=False):
+    coords=[(22,25),(50,22),(78,25),(19,52),(81,52),(22,78),(50,81),(78,78)]
+    connections='<svg class="coach-connections" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'+''.join(f'<path d="M 50 50 L {x} {y}" pathLength="100"/>' for x,y in coords)+'</svg>'
+    dots=''.join(f'<span class="station{ " you-station" if i==7 else ""}" style="--x:{x}%;--y:{y}%" aria-hidden="true">{ "YOU" if i==7 else f"0{i+1}"}</span>' for i,(x,y) in enumerate(coords))
+    controls='<div class="room-controls" role="group" aria-label="Explore the small-group illustration" hidden><span>Make room →</span><button type="button" aria-pressed="false">01 / You</button><button type="button" aria-pressed="false">02 / Together</button><button type="button" aria-pressed="true">03 / Supported</button></div>' if prototype else ''
+    live=' aria-live="polite" aria-atomic="true"' if prototype else ''
+    return f'''<section class="room section" id="room" aria-labelledby="room-title"><div class="wrap"><div class="section-label eyebrow"><span>01 / Small group. Personal attention.</span><span>Room to grow</span></div><div class="room-grid"><div class="room-copy"><h2 id="room-title">Big support.<br>Small group.</h2><p>Eight people at most. A trainer guiding every session. Enough room to be yourself, and enough support to keep moving forward.</p>{textlink('Explore the classes',base+'classes/')}</div><div class="room-experience"><div class="room-diagram" role="img" aria-label="Illustration of eight participants, including you, around a trainer. This is a concept diagram, not a studio floor plan." data-state="2"><span class="diagram-label">Empower / The small-group difference</span>{connections}{dots}<div class="coach-node" aria-hidden="true"><span>✳</span>YOUR<br>COACH</div><span class="diagram-label diagram-label-bottom">A place for you.</span></div>{controls}<p class="room-state-text"{live}>Up to 8 people. A coach beside you.</p><p class="room-note">Illustration of the training approach. Not a floor plan or live availability.</p></div></div><div class="proof-row"><div><strong>08</strong><p>People maximum<br>in each class</p></div><div><strong>45</strong><p>Minutes per<br>training session</p></div><div><strong>YOU</strong><p>A starting point<br>that's yours</p></div></div></div></section>'''
+
+def prototype():
+    intro='<div class="wrap prototype-title"><p class="eyebrow">Signature prototype / Room for you</p><p>Opening → small-group scene → representative training content. Use the state buttons to inspect the beginning, middle and complete composition. Mobile uses the same three touch controls without pinning or horizontal scrolling.</p><div class="prototype-state-nav" role="group" aria-label="Prototype states"><button type="button" aria-pressed="false">Before</button><button type="button" aria-pressed="false">During</button><button type="button" aria-pressed="true">After</button></div></div>'
+    sample=f'<section class="section wrap" id="training"><div class="section-label eyebrow"><span>02 / Representative content</span><span>Find your rhythm</span></div><div class="training-head"><h2>Strength.<br>Your way.</h2><p>From strength training to Boxercise and Mama &amp; Baba Fit, choose a starting point with the team.</p></div>{textlink("Explore training", "./classes/")}</section>'
+    (ROOT/'prototype.html').write_text(page(intro+hero()+room(prototype=True)+sample,'Signature Prototype','A three-state working prototype of the Room for You concept.',bodyclass='prototype'))
+
+CLASSES = [
+    ('strength','Strength & conditioning','Build strength with resistance work, bodyweight exercises and a trainer helping you with technique.','strength','A participant practising a lunge with an Empower trainer.'),
+    ('hiit','HIIT','Work through intervals of higher-intensity effort and recovery, with guidance from the team.','training','A trainer coaching a participant in the Empower studio.'),
+    ('boxercise','Boxercise','Boxing-inspired fitness: movement, pad work and a chance to let off some steam.','boxercise','A participant practising pad work with a trainer at Empower.'),
+    ('mama-baba','Mama & Baba Fit','A relaxed full-body class where you can bring your baby. Speak to Emma about readiness and the right starting point.','mama-baba','A parent training with a coach in the Empower studio, with a baby nearby.'),
+    ('mobility','Flexibility & mobility','Give movement its own space. Work on flexibility and the way your joints move.','coaching','An Empower trainer guiding a seated participant through an exercise.'),
+]
+FAQS = [
+    ('Is this for beginners?','Yes. The team welcomes beginners and helps you choose a starting point.'),
+    ('How big are the groups?','Classes have a maximum of eight people and are led by a personal trainer.'),
+    ('Can I use the gym on my own?','The studio offers structured, coached sessions rather than independent open-gym access.'),
+    ('Can you adapt exercises around an injury?','Discuss it during your initial assessment. The team can review suitable exercise alternatives with you.'),
+    ('Can I bring my baby?','The Mama & Baba session welcomes babies under 12 months. Ask Emma about suitability and getting started.'),
+    ('Are there women-only, men-only and mixed sessions?','The published FAQ lists all three. Check the current timetable and availability with the studio.'),
+    ('Is parking available?','Yes. The studio lists free parking at Millbank House.'),
+    ('Are there showers?','There are no showers. A water refill station is available.'),
+    ('What does it cost?','Contact the studio for current options and prices. No membership price is published in this preview.'),
+]
+
+def faqs(items):
+    return ''.join(f'<details class="faq-item"><summary>{q}</summary><p>{a}</p></details>' for q,a in items)
+
+def training(base='./'):
+    details=''
+    for i,(slug,name,copy,photo,alt) in enumerate(CLASSES):
+        details+=f'''<details class="training-option" {'open' if i==0 else ''} data-image="{base}assets/images/{photo}.webp" data-alt="{escape(alt)}" data-label="Real people. Real coaching. Lucan."><summary><span class="eyebrow">0{i+1}</span><span class="display">{name}</span><span class="plus" aria-hidden="true">+</span></summary><div class="option-content"><p>{copy}</p>{textlink('Explore this class',base+'classes/#'+slug)}</div></details>'''
+    return f'''<section class="section wrap" id="training" aria-labelledby="training-title"><div class="section-label eyebrow"><span>02 / A rhythm that works for you</span><span>Find your starting point</span></div><div class="training-head"><h2 id="training-title">Your pace.<br>Your power.</h2><p>Different ways to move. The same personal attention. Explore the classes, then let the team help you find your fit.</p></div><div class="training-layout"><figure class="training-visual">{img('strength',CLASSES[0][4],base)}<figcaption class="image-tag">Real people. Real coaching. Lucan.</figcaption></figure><div class="training-options">{details}</div></div><div class="training-foot"><p>New to training? You don’t need to have it all figured out.</p>{textlink('Start with a free consultation',BOOK)}</div></section>'''
+
+def personal(base='./'):
+    return f'''<section class="personal section" id="personal" aria-labelledby="personal-title"><div class="wrap"><div class="section-label eyebrow"><span>03 / Personal training</span><span>A coach in your corner</span></div><div class="personal-grid"><div><h2 id="personal-title">A plan built<br>around <em>you.</em></h2><p class="personal-intro">Your goals, your starting point, your life. Work with a trainer on an individual programme, with support and accountability along the way.</p><div class="personal-list"><p><strong>START WITH A CONVERSATION</strong>Meet a trainer before making a commitment.</p><p><strong>KEEP MOVING FORWARD</strong>Guidance on training, technique and nutrition.</p></div>{button('Explore personal training',base+'personal-training/',True)}</div><figure class="personal-photo">{img('training','A participant training with an Empower coach in the Lucan studio.',base)}<figcaption class="image-tag">Support that stays personal.</figcaption></figure></div></div></section>'''
+
+def people(base='./'):
+    return f'''<section class="people section wrap" id="people" aria-labelledby="people-title"><div class="section-label eyebrow"><span>04 / Good people to have beside you</span><span>Meet your coaches</span></div><div class="people-top"><h2 id="people-title">People first.<br>Always.</h2><p>Knowledgeable, approachable and ready to help you take that next step. Get to know Emma and Dean.</p></div><div class="people-grid"><article class="person"><div class="person-photo">{img('emma','Emma McGrath, owner and personal trainer at Empower Fitness Hub.',base)}</div><div class="person-info"><div><h3>Emma McGrath</h3><p class="eyebrow">Owner / Personal trainer</p></div><p>Strength training, nutrition guidance and support for women before and after pregnancy.</p></div></article><article class="person"><div class="person-photo">{img('dean','Dean Foley, trainer at Empower Fitness Hub.',base)}</div><div class="person-info"><div><h3>Dean Foley</h3><p class="eyebrow">Trainer</p></div><p>A health-first approach, bringing together strength, movement and nutrition knowledge.</p></div></article></div><div class="people-link">{textlink('Meet the team',base+'our-team/')}</div></section>'''
+
+def testimony():
+    return '''<section class="testimony" id="testimony"><div class="wrap"><p class="eyebrow" style="margin-bottom:28px">A member’s own words</p><blockquote>“I was always scared of the gym but now I really look forward to the sessions…”</blockquote><div class="testimony-footer"><p class="eyebrow">Michaela · Testimonial on Empower’s website</p><a href="https://www.empowerfitnesshub.ie/personal-training">Read the original testimonial ↗</a></div></div></section>'''
+
+def hours():
+    return '''<div class="hours" aria-label="Published studio opening hours"><div><span>Monday–Thursday</span><span>06:00–21:00</span></div><div><span>Friday</span><span>06:00–19:30</span></div><div><span>Saturday–Sunday</span><span>09:00–12:30</span></div></div>'''
+
+def visit(base='./'):
+    return f'''<section class="section wrap" id="visit" aria-labelledby="visit-title"><div class="section-label eyebrow"><span>05 / Your first step</span><span>Lucan village</span></div><div class="visit"><div class="visit-left"><h2 id="visit-title">Come in.<br>Feel at home.</h2><p>Find us at Millbank House, in the heart of Lucan village. Free parking. Friendly faces. A conversation about you.</p>{button()}<address class="location-address"><p>Millbank House, Lower Lucan Road<br>St. Edmondsbury, Lucan, Co. Dublin<br><strong>K78 C8D9</strong></p></address>{hours()}{textlink('Get directions','https://www.google.com/maps/search/?api=1&query=Empower+Fitness+Hub+Millbank+House+Lucan+K78+C8D9')}</div><div class="visit-right"><p class="eyebrow" style="margin-bottom:15px">No need to know where to start</p><h3>That’s what we’re here for.</h3><ol><li><div><h4>Meet your trainer</h4><p>Arrange a free initial consultation to get to know the team and see if the studio feels right.</p></div></li><li><div><h4>Talk about your goals</h4><p>Share what you want to work on, your training experience and anything the team should know.</p></div></li><li><div><h4>Find your starting point</h4><p>Work with the team to choose a programme and sessions that suit you.</p></div></li></ol></div></div></section>'''
+
+def closing():
+    return f'''<section class="closing section"><div class="wrap closing-top"><h2>Make time.<span>For you.</span></h2><div class="closing-action"><p>The first step is a conversation. Let’s find out what training could look like for you.</p>{button()}{textlink('Or call Emma: 085 859 2838','tel:+353858592838')}</div></div></section>'''
+
+def subhero(kicker,title,lead='',cta=False):
+    return f'<section class="page-hero wrap"><p class="eyebrow">{kicker}</p><h1>{title}</h1>'+ (f'<p class="lead">{lead}</p>' if lead else '')+(button() if cta else '')+'</section>'
+
+def write(slug,content,title,desc,current=''):
+    folder=ROOT/slug;folder.mkdir(exist_ok=True)
+    (folder/'index.html').write_text(page(content,title,desc,'../',current or slug))
+
+def schedule():
+    data=json.loads((ROOT/'data/timetable.json').read_text())
+    filters='<button type="button" data-day="all" aria-pressed="true" aria-controls="schedule-grid">Full week</button>'
+    cards=''
+    for i,entry in enumerate(data['days']):
+        day=entry['day'];slug=day.lower()
+        filters+=f'<button type="button" data-day="{slug}" aria-pressed="false" aria-controls="schedule-grid">{day[:3]}</button>'
+        times=''.join(f'<li><time>{t}</time></li>' for t in entry['times'])
+        cards+=f'<article class="schedule-day" data-schedule-day="{slug}" aria-labelledby="day-{slug}"><div class="schedule-day-head"><span class="eyebrow">0{i+1}</span><h2 id="day-{slug}">{day}</h2></div><ul aria-label="{day} published start times">{times}</ul></article>'
+    return f'''<section class="schedule wrap" aria-labelledby="schedule-title"><div class="section-label eyebrow"><span id="schedule-title">Published session start times</span><span>Lucan · Irish local time</span></div><div class="schedule-tools" hidden><div class="day-filters" role="group" aria-label="Choose a timetable day">{filters}</div><p class="schedule-status" aria-live="polite">Showing the full published week.</p></div><div id="schedule-grid" class="schedule-grid">{cards}</div><div class="schedule-note"><p><strong>Confirm your session with the studio.</strong> The official graphic does not identify the class type at each time or show remaining spaces. Its filename dates to 2023; current times need confirmation.</p>{textlink('Ask Emma about a session','mailto:emma@empowerfitnesshub.ie?subject=Class%20timetable%20enquiry')}</div><details class="schedule-original"><summary>See the original published timetable</summary><figure>{img('timetable','Timetable graphic published by Empower, transcribed above.','../')}<figcaption>{textlink('View the official timetable page',data['source_url'])}</figcaption></figure></details></section>'''
+
+def booking():
+    return subhero('Free consultation / Your first step',"Let’s get<br>started.",'Meet a trainer, talk about your goals and find the right starting point. Contact Emma to arrange your free initial consultation.')+f'''<section class="booking-section wrap"><div class="booking-intro"><p class="eyebrow">A conversation about you</p><h2>A coach.<br>A plan.<br>A hello.</h2><ol class="booking-steps"><li><strong>Get in touch</strong><p>Email Emma or call the studio to discuss a consultation and a suitable time.</p></li><li><strong>Talk about your goals</strong><p>Share your training experience and what you’d like help with.</p></li><li><strong>Confirm your appointment</strong><p>Wait for the studio to confirm the time and appointment details before attending.</p></li></ol><div class="booking-help"><h3>Looking for a class?</h3><p>The class timetable and consultation calendar are different. Ask the studio about class formats and spaces.</p>{textlink('View the class timetable','../class-timetable/')}</div></div><div class="booking-panel" id="calendar-start"><div class="booking-panel-head"><span class="eyebrow">Your first step / Talk to Emma</span><h2>Start with<br>a hello.</h2><p>We’re keeping the first step simple. Contact Emma about personal training, classes or a free initial consultation.</p></div><div class="booking-contact-actions">{button('Email Emma','mailto:emma@empowerfitnesshub.ie?subject=Free%20initial%20consultation')}{textlink('Call 085 859 2838','tel:+353858592838')}</div><details class="booking-existing"><summary>View the published Calendly calendar</summary><div class="booking-calendar-context"><p><strong>Please check the event details.</strong> When inspected on 11 October 2026, the studio’s published link showed “NutriFit consultation”: a 45-minute phone call, with no available dates displayed in October.</p><p>For a training consultation, contact Emma to confirm the right appointment. Calendar details and availability can change.</p><p class="booking-live-note">This is the real studio’s booking destination. Completing any booking contacts Empower Fitness Hub.</p></div><button type="button" class="button calendar-load" aria-controls="booking-calendar" aria-expanded="false" hidden>View existing Calendly calendar <span aria-hidden="true">↗</span></button><p class="calendar-status" role="status" aria-live="polite"></p><div class="calendar-shell" id="booking-calendar" hidden><div id="calendly-embed" data-booking-url="{BOOK}"></div></div><div class="calendar-alternative"><a class="text-link" href="{BOOK}" target="_blank" rel="noopener">Open Calendly in a new tab <span aria-hidden="true">↗</span></a><p>No calendar showing? Use the direct link or <a href="mailto:emma@empowerfitnesshub.ie">email Emma</a>. No appointment is reserved until Calendly confirms it.</p><p class="calendar-privacy">Opening the calendar connects to Calendly and its service providers. <a href="https://calendly.com/privacy">Calendly privacy information ↗</a></p></div></details></div></section><section class="wrap booking-answers"><h2>Before your<br>first visit.</h2><div>{faqs([('Can I book a class through this calendar?','No. The published link currently describes a NutriFit consultation. Contact the studio about class bookings and spaces.'),('How do I arrange a fitness consultation?','Email Emma or call 085 859 2838. The website advertises a free initial consultation, but its current Calendly event details need confirmation.'),('How do I change a Calendly appointment?','Use the cancellation or rescheduling options in your Calendly confirmation. You can also contact the studio.'),('Where is the studio?','Millbank House, Lower Lucan Road, St. Edmondsbury, Lucan, Co. Dublin, K78 C8D9. Free parking is listed by the studio.')])}</div></section>'''
+
+def gallery():
+    records=json.loads((ROOT/'data/gallery.json').read_text())
+    figures=''
+    for i,r in enumerate(records):
+        width,height=r['size'];src='../assets/images/'+r['name']+'.webp'
+        figures+=f'<figure class="progress-figure"><a href="{src}" target="_blank" rel="noopener" aria-label="Open published member progress photograph {i+1} in a new tab"><img src="{src}" alt="Member progress photograph {i+1}, before-and-after montage published by Empower Fitness Hub." width="{width}" height="{height}" loading="lazy" decoding="async"></a><figcaption><span class="eyebrow">Member progress / {i+1:02d}</span><span>Published by Empower <span aria-hidden="true">↗</span></span></figcaption></figure>'
+    return f'<section class="progress-gallery wrap" aria-label="Published member progress photographs">{figures}</section><div class="gallery-context wrap"><p>Photographs reproduced from Empower’s public before-and-after page. Individual experiences vary; these images do not promise a particular result. No names, measurements or timelines have been inferred.</p>{textlink("View the original gallery","https://www.empowerfitnesshub.ie/before-after")}</div>'
+
+def full_site():
+    content=hero()+room()+training()+personal()+people()+testimony()+visit()+f'<section class="section wrap faq-section" id="faq"><div class="faq-grid"><div><h2>Good<br>questions.</h2>{textlink("More answers", "./faq/")}</div><div>{faqs(FAQS[:4])}</div></div></section>'+closing()
+    (ROOT/'index.html').write_text(page(content,'Personal Training & Small-Group Fitness in Lucan','An independent concept for Empower’s trainer-led sessions, personal training and free consultation in Lucan.'))
+    classes=subhero('Training / Your starting point','Find your<br>rhythm.','Five ways to move. Small groups, personal attention and a trainer helping you find the right fit.',True)
+    for i,(slug,name,copy,photo,alt) in enumerate(CLASSES):
+        note='<p class="detail-note">The published class information asks for GP approval to exercise and gives a starting point of at least 6 weeks after birth, or 10 weeks after a C-section. Speak to Emma about your circumstances and current class availability.</p>' if slug=='mama-baba' else ''
+        classes+=f'<section class="detail-block wrap" id="{slug}"><div class="detail-copy"><p class="eyebrow">0{i+1} / Coached training</p><h2>{name}</h2><p>{copy}</p>{note}{textlink("Ask about this class",BOOK)}</div><figure class="detail-img">{img(photo,alt,"../")}</figure></section>'
+    classes+=f'<section class="wrap" style="padding-bottom:65px">{textlink("View the published timetable", "../class-timetable/")}</section>'+closing()
+    write('classes',classes,'Classes in Lucan','Explore Empower’s strength, HIIT, Boxercise, Mama & Baba and flexibility and mobility sessions.')
+    pt=subhero('Personal training / Individual programmes','Your goals.<br>Your plan.','Begin with a free consultation. Meet a trainer, discuss your goals and find an approach that works for you.',True)
+    pt+=f'<section class="detail-block wrap"><figure class="detail-img">{img("coaching","An Empower trainer helping a participant with technique.","../")}</figure><div class="detail-copy"><h2>Built around<br>your life.</h2><p>The team designs an individual programme around your goals, fitness level and lifestyle. Coaching, progress monitoring and nutrition guidance support your training.</p><p>Talk to the studio about current personal training formats, availability and prices.</p>{textlink("Meet your trainers","../our-team/")}</div></section>'+closing()
+    write('personal-training',pt,'Personal Training in Lucan','Individual programmes and supportive coaching from Empower Fitness Hub in Lucan.')
+    team=subhero('Our people / Meet the team','In your<br>corner.','Meet the people behind the coaching at Empower Fitness Hub.')
+    team+=f'<section class="detail-block wrap"><figure class="detail-img">{img("emma","Emma McGrath, owner and personal trainer.","../")}</figure><div class="detail-copy"><p class="eyebrow">Owner / Personal trainer</p><h2>Emma<br>McGrath.</h2><p>Emma’s coaching covers strength training, nutrition, weight-management programmes and support before and after pregnancy. She also designs programmes for emergency-service fitness tests.</p><ul class="bullets"><li>Diploma in Personal Training</li><li>Diploma in Strength & Conditioning</li><li>Certificates in Nutrition and Pre & Post Pregnancy</li></ul>{textlink("Read Emma’s original profile","https://www.empowerfitnesshub.ie/our-team")}</div></section>'
+    team+=f'<section class="detail-block wrap"><div class="detail-copy"><p class="eyebrow">Trainer</p><h2>Dean<br>Foley.</h2><p>Dean combines movement, strength and nutrition with a health-first approach. His sporting background includes boxing, kick-boxing and martial arts.</p><ul class="bullets"><li>Diploma in Personal Training and S & C — Setanta College</li><li>CHEK Holistic Lifestyle Coach</li><li>CHEK Integrated Movement Specialist</li></ul>{textlink("Read Dean’s original profile","https://www.empowerfitnesshub.ie/our-team")}</div><figure class="detail-img">{img("dean","Dean Foley, trainer.","../")}</figure></section>'+closing()
+    write('our-team',team,'Our Team','Meet Emma McGrath and Dean Foley, the trainers listed by Empower Fitness Hub.')
+    timetable=subhero('Timetable / Plan your week','Make<br>your time.','Early starts, evenings and weekends. Explore the studio’s published start times, then confirm your session with Emma.')+schedule()+visit('../')
+    write('class-timetable',timetable,'Class Timetable','View the timetable published by Empower and contact the studio to confirm current availability.')
+    write('book',booking(),'Arrange a Free Consultation','Contact Emma to arrange a consultation; inspect the existing Calendly destination and its current event details.')
+    contact=subhero('Find us / Lucan village','Your first<br>hello.','Book a free consultation, email Emma or call the studio. Choose what feels easiest.')
+    contact+=f'<div class="wrap" style="padding-bottom:45px;display:flex;gap:30px;flex-wrap:wrap">{textlink("Email Emma", "mailto:emma@empowerfitnesshub.ie")}{textlink("Call 085 859 2838", "tel:+353858592838")}</div>'+visit('../')
+    write('contact',contact,'Contact & Directions','Contact Emma at Empower Fitness Hub, Millbank House, Lucan, K78 C8D9.')
+    questions=subhero('FAQs / Before you begin','Good<br>questions.','A few practical answers before your first visit.')+f'<div class="all-faq wrap">{faqs(FAQS)}{textlink("Ask Emma something else", "mailto:emma@empowerfitnesshub.ie")}</div>'+closing()
+    write('faq',questions,'Frequently Asked Questions','Beginner support, class sizes, facilities and practical information for Empower Fitness Hub.')
+    stories=subhero('Member stories / Beyond the first step','Confidence<br>in motion.','Progress is personal. Read the experiences and before-and-after stories shared on Empower’s official website.')
+    stories+=testimony()+gallery()+closing()
+    write('before-after',stories,'Member Stories & Before and After','View member progress photographs published by Empower Fitness Hub.')
+    notice=subhero('Preview information','A concept.<br>For you.')+'''<div class="notice-copy wrap"><p>This is an independent, unofficial redesign concept for Empower Fitness Hub. It is not operated by, endorsed by or connected to the business. Information was checked against its public website on 11 October 2026.</p><h2>Bookings and contact</h2><p>The consultation page can load the studio’s existing Calendly calendar when you choose to open it. Its direct link opens the same real booking destination. Email and telephone links contact the real business. This concept does not accept payments, create memberships or submit enquiry forms.</p><h2>Your privacy in this preview</h2><p>The preview sets no analytics or marketing cookies and collects no enquiry data. Its host may process access logs. Calendly and its providers may set cookies and process booking data after you open the calendar or follow its direct link. The calendar is not loaded before that action, and its own cookie controls remain available. Social platforms apply their own terms after you follow a link.</p><h2>Photography and identity</h2><p>Studio and portrait photography is reused from the official website for this concept. Copyright remains with the relevant owners. Reuse permission, client consent and current trainer information must be confirmed before an official launch. The eight-person diagram and typographic identity are proposed design elements.</p><h2>Information to confirm before launch</h2><p>Current timetable, personal training formats, membership prices, booking availability, photograph permissions and approved legal policies. The published timetable graphic appears to originate in 2023.</p><p><a class="text-link" href="https://www.empowerfitnesshub.ie/">Visit the official website ↗</a></p></div>'''
+    write('preview-notice',notice,'About This Preview','Independent concept information, contact destinations and preview privacy details.')
+    home=hero('../')+room('../')+training('../')+personal('../')+people('../')+testimony()+visit('../')+closing()
+    write('home',home,'Personal Training & Small-Group Fitness in Lucan','Independent Empower Fitness Hub website concept.')
+    (ROOT/'404.html').write_text(page(subhero('Page not found','Take a<br>different turn.','The page you’re looking for isn’t here.')+f'<div class="wrap" style="padding-bottom:80px"><a class="button" href="{BASE_PATH}">Return to the homepage ↗</a></div>','Page Not Found','This page is unavailable.',BASE_PATH))
+
+if __name__=='__main__':
+    prototype()
+    full_site()

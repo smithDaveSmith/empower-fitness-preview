@@ -1,0 +1,36 @@
+{
+  "mode": "structural and simulated DOM checks; no rendered-browser QA",
+  "page_routes": 13,
+  "local_references": 429,
+  "portable_navigation_links": 299,
+  "checks": [
+    "menu opening, Escape and closing",
+    "cleanup and reinitialisation without duplicate listeners",
+    "class image selection",
+    "three prototype states",
+    "reduced-motion/no-GSAP fallback",
+    "desktop and mobile day selection",
+    "calendar unloaded before request",
+    "simulated script load failure and retry",
+    "official widget parameters and iframe label",
+    "no fabricated booking confirmation",
+    "portable route and fragment navigation"
+  ],
+  "public_booking_observation": {
+    "checked": "2026-10-11",
+    "url": "https://calendly.com/empowerfitnesshub/30min",
+    "event_name": "NutriFit consultation",
+    "duration": "45 min",
+    "location": "Phone call",
+    "availability": "No available dates shown in October; next-month control disabled"
+  },
+  "not_tested": [
+    "rendered desktop/mobile layouts",
+    "live GSAP motion",
+    "embedded Calendly in the redesign",
+    "booking submission",
+    "owner notifications and calendar conflict checks",
+    "Lighthouse",
+    "live deployment"
+  ]
+}

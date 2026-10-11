@@ -1,0 +1,15 @@
+{
+  "source_url": "https://www.empowerfitnesshub.ie/class-timetable",
+  "checked_date": "2026-10-11",
+  "timezone": "Europe/Dublin",
+  "status": "Published graphic; current schedule and class types need studio confirmation.",
+  "days": [
+    {"day": "Monday", "times": ["06:00", "06:45", "09:30", "12:30", "18:00", "19:00", "20:00"]},
+    {"day": "Tuesday", "times": ["06:00", "06:45", "09:30", "18:00", "19:00"]},
+    {"day": "Wednesday", "times": ["06:00", "06:45", "09:30", "12:30", "18:00", "19:00", "20:00"]},
+    {"day": "Thursday", "times": ["06:00", "06:45", "09:30", "18:00", "19:00"]},
+    {"day": "Friday", "times": ["06:00", "06:45", "09:30", "18:00", "18:45"]},
+    {"day": "Saturday", "times": ["09:00", "09:45"]},
+    {"day": "Sunday", "times": ["09:30", "10:30"]}
+  ]
+}
